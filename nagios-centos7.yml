@@ -1,0 +1,253 @@
+---
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Install all nagios need packages
+    yum:
+      name: ['epel-release', 'gcc', 'glibc','python-passlib', 'glibc-common', 'gd', 'gd-devel', 'make', 'net-snmp',' openssl-devel', 'httpd', 'php', 'unzip', 'wget', 'postfix', 'perl']
+      state: latest
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Download file Nagios Core
+    get_url:
+      url: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.5.tar.gz
+      dest: /tmp
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Unarchive a file that is already on the remote machine
+    unarchive:
+      src: /tmp/nagioscore-nagios-4.4.5.tar.gz
+      dest: /tmp
+      remote_src: yes
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Run a script Nagios
+    shell:
+      cmd: /tmp/nagioscore-nagios-4.4.5/configure
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Make all command
+    shell:
+      cmd: make all
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Make install-groups-users
+    shell:
+      cmd: make install-groups-users
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Nagios add to  apache
+    shell:
+      cmd: usermod -aG nagios apache
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Service or daemon files install
+    shell:
+      cmd: make install
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Service files to start on boot
+    shell:
+      cmd: make install-daemoninit
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Enable service httpd
+    service:
+      name: httpd
+      enabled: yes
+      state: restarted
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Installs and configures the external command file
+    shell:
+      cmd: make install-commandmode
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Configures make command file
+    shell:
+      cmd: make install-config
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Configures the external command file 2
+    shell:
+      cmd: make install-webconf
+      chdir: /tmp/nagioscore-nagios-4.4.5/
+
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Download Nagios plugins
+    get_url:
+      url: http://nagios-plugins.org/download/nagios-plugins-2.3.2.tar.gz
+      dest: /tmp
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Unarchive nagios-plugins that is already on the remote machine
+    unarchive:
+      src: /tmp/nagios-plugins-2.3.2.tar.gz
+      dest: /tmp
+      remote_src: yes
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Run a plugin confugre file
+    shell:
+      cmd: /tmp/nagios-plugins-2.3.2/configure
+      chdir: /tmp/nagios-plugins-2.3.2/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Make plugin confugre file
+    shell:
+      cmd: make
+      chdir: /tmp/nagios-plugins-2.3.2/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Make and install file
+    shell:
+      cmd: make install
+      chdir: /tmp/nagios-plugins-2.3.2/
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Add string cfg_dir=/usr/local/nagios/etc/servers to nagios.cfg file
+    lineinfile:
+      path: /usr/local/nagios/etc/nagios.cfg
+      line: cfg_dir=/usr/local/nagios/etc/servers
+      state: present
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Create the directory that will store the configuration
+    file:
+      path: /usr/local/nagios/etc/servers
+      state: directory
+      mode: '0755'
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Add a Nagios user to a password file
+    htpasswd:
+      path: /usr/local/nagios/etc/htpasswd.users
+      name: admin
+      password: password
+      owner: ansible
+      group: ansible
+      create: yes
+      mode: 0775
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Restart service httpd
+    service:
+      name: httpd
+      state: restarted
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Final configuration check
+    shell:
+      cmd: /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+      chdir: /
+
+- hosts: test2
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Enable service nagios
+    service:
+      name: nagios
+      enabled: yes
+      state: restarted
+
